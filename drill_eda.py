@@ -23,9 +23,11 @@ def compute_summary(df):
         DataFrame containing count, mean, median, std, min, max
         for each numeric column. Save the result to output/summary.csv.
     """
-    # TODO: Compute descriptive statistics (count, mean, median, std, min, max)
-    #       for all numeric columns and save to output/summary.csv
-    pass
+    summary = df.describe()
+    summary.loc['median'] = df.median(numeric_only=True)
+    summary = summary.loc[['count', 'mean', 'median', 'std', 'min', 'max']]
+    summary.to_csv("output/summary.csv")
+    return summary
 
 
 def plot_distributions(df, columns, output_path):
@@ -39,9 +41,18 @@ def plot_distributions(df, columns, output_path):
     Returns:
         None — saves the figure to output_path
     """
-    # TODO: Create a 2x2 figure with sns.histplot (KDE overlay) for each column
-    #       Add titles, labels, and tight layout before saving
-    pass
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    axes = axes.flatten()
+
+    for i, col in enumerate(columns):
+        sns.histplot(df[col], kde=True, ax=axes[i], color='skyblue')
+        axes[i].set_title(f'Distribution of {col}', fontsize=14)
+        axes[i].set_xlabel(col)
+        axes[i].set_ylabel('Frequency')
+
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def plot_correlation(df, output_path):
@@ -54,19 +65,38 @@ def plot_correlation(df, output_path):
     Returns:
         None — saves the figure to output_path
     """
-    # TODO: Compute the correlation matrix for numeric columns and
-    #       visualize it as an annotated Seaborn heatmap
-    pass
+    corr_matrix = df.corr(numeric_only=True)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+    plt.title('Pearson Correlation Heatmap', fontsize=16)
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def main():
     """Load data, compute summary, and generate all plots."""
     os.makedirs("output", exist_ok=True)
 
-    # TODO: Load the CSV from data/sample_sales.csv
-    # TODO: Call compute_summary and save the result
-    # TODO: Choose 4 numeric-friendly columns and call plot_distributions
-    # TODO: Call plot_correlation
+    # Load the CSV from data/sample_sales.csv
+    data_path = os.path.join("data", "sample_sales.csv")
+    df = pd.read_csv(data_path)
+
+    # Feature Engineering: Derive total_price and month
+    df['total_price'] = df['quantity'] * df['unit_price']
+    df['date'] = pd.to_datetime(df['date'])
+    df['month'] = df['date'].dt.month
+
+    # Call compute_summary and save the result
+    compute_summary(df)
+
+    # Choose 4 numeric-friendly columns and call plot_distributions
+    plot_cols = ['quantity', 'unit_price', 'total_price', 'month']
+    plot_distributions(df, plot_cols, "output/distributions.png")
+
+    # Call plot_correlation
+    plot_correlation(df, "output/correlation.png")
+    print("EDA completed. Outputs saved to the 'output' directory.")
 
 
 if __name__ == "__main__":
