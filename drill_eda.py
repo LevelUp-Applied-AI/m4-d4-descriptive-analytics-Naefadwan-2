@@ -23,9 +23,9 @@ def compute_summary(df):
         DataFrame containing count, mean, median, std, min, max
         for each numeric column. Save the result to output/summary.csv.
     """
-    stats = df.describe().T
-    stats['median'] = df.median(numeric_only=True)
-    summary = stats[['count', 'mean', 'median', 'std', 'min', 'max']]
+    summary = df.describe()
+    summary.loc['median'] = df.median(numeric_only=True)
+    summary = summary.loc[['count', 'mean', 'median', 'std', 'min', 'max']]
     summary.to_csv("output/summary.csv")
     return summary
 
